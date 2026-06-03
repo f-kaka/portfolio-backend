@@ -4,7 +4,6 @@ const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2");
 const jwt = require("jsonwebtoken");
-const OpenAI = require("openai");
 const verifyToken = require("./middleware/authMiddleware");
 const app = express();
 
@@ -103,18 +102,27 @@ function offlineAI(message) {
     : "I’m still learning 🤖. Ask about skills, projects, or services.";
 }
 
-// ===== AI ROUTE (FIXED) =====
+// ===== AI ROUTE (PRODUCTION SAFE FIXED) =====
 app.post("/api/ai", async (req, res) => {
   try {
     const message = req.body.message || "";
 
-    // OPTION 1: TRY OPENAI IF KEY EXISTS
-    if (process.env.OPENAI_API_KEY && process.env.USE_OPENAI === "true") {
+    // check if OpenAI is available AND initialized
+    const canUseOpenAI =
+      process.env.USE_OPENAI === "true" &&
+      process.env.OPENAI_API_KEY &&
+      openai;
+
+    // OPTION 1: OPENAI MODE
+    if (canUseOpenAI) {
       try {
         const response = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [
-            { role: "system", content: "You are a helpful portfolio assistant." },
+            {
+              role: "system",
+              content: "You are a helpful portfolio assistant."
+            },
             { role: "user", content: message }
           ]
         });
@@ -122,25 +130,26 @@ app.post("/api/ai", async (req, res) => {
         return res.json({
           reply: response.choices[0].message.content
         });
-
       } catch (apiError) {
-        console.log("OpenAI failed, switching to offline AI");
+        console.log(
+          "OpenAI failed, switching to offline AI:",
+          apiError.message
+        );
       }
     }
 
-    // OPTION 2: OFFLINE AI ALWAYS WORKS
+    // OPTION 2: OFFLINE AI (ALWAYS SAFE)
     return res.json({
       reply: offlineAI(message)
     });
-
   } catch (error) {
-    console.log(error);
+    console.log("AI ROUTE ERROR:", error.message);
+
     return res.status(500).json({
       reply: "AI system error"
     });
   }
 });
-
 
 // ===== MYSQL CONNECTION (UNCHANGED) =====
 const db = mysql.createConnection({
