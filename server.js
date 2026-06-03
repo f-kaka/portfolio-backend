@@ -10,6 +10,12 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT ||
 const multer = require("multer");
 const path = require("path");
 
+
+const fs = require("fs");
+
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
 // 1. CREATE STORAGE FIRST
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -30,6 +36,16 @@ app.use("/uploads", express.static("uploads"));
 // ===== MIDDLEWARE =====
 app.use(cors());
 app.use(express.json());
+
+
+// ROOT ROUTE (ADD THIS)
+app.get("/", (req, res) => {
+  res.json({
+    status: "OK",
+    message: "Portfolio Backend is running"
+  });
+});
+
 
 app.post("/api/upload/profile", upload.single("image"), (req, res) => {
   try {
