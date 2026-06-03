@@ -6,7 +6,7 @@ const mysql = require("mysql2");
 const jwt = require("jsonwebtoken");
 const verifyToken = require("./middleware/authMiddleware");
 const app = express();
-
+const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 const multer = require("multer");
 const path = require("path");
 
@@ -33,8 +33,7 @@ app.use(express.json());
 
 app.post("/api/upload/profile", upload.single("image"), (req, res) => {
   try {
-    const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
-
+const imageUrl = `${BASE_URL}/uploads/${req.file.filename}`;
     db.query(
       "UPDATE profile SET image=? WHERE id=1",
       [imageUrl],
@@ -159,7 +158,7 @@ console.log("DB_NAME =", process.env.DB_NAME);
 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+port: Number(process.env.DB_PORT),
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME
@@ -558,22 +557,6 @@ app.delete("/api/skills/:id", (req, res) => {
   );
 });
 
-
-app.get("/api/profile", (req, res) => {
-
-  db.query(
-    "SELECT * FROM profile LIMIT 1",
-    (err, results) => {
-
-      if (err) {
-        return res.status(500).json({});
-      }
-
-      res.json(results[0]);
-    }
-  );
-
-});
 
 
 // ===== START SERVER =====
