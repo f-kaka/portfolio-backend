@@ -55,9 +55,17 @@ app.post("/api/upload/profile", upload.single("image"), (req, res) => {
 
 
 // ===== OPENAI (OPTIONAL SAFE USAGE) =====
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai = null;
+
+if (process.env.USE_OPENAI === "true" && process.env.OPENAI_API_KEY) {
+  const OpenAI = require("openai");
+
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+} else {
+  console.log("OpenAI disabled in production");
+}
 
 // ===== OFFLINE AI (FALLBACK) =====
 function offlineAI(message) {
